@@ -54,7 +54,7 @@ def get_face_image(camera_image, face_detector):
 
     # Crop the first face found
     if len(faces):
-        x, y, w, h = faces[0]
+        x, y, w, h = faces[0].tolist()
         face_image = img_gray[y:y + h, x:x + w]
         return (face_image, (x, y, w, h))
 
@@ -62,7 +62,7 @@ def get_face_image(camera_image, face_detector):
 
 def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
     face_image, rect = get_face_image(camera_image, face_detector)
-    if face_image is None: return # No face detected
+    if face_image is None: return (None, None)# No face detected
     emotions = predict_emotion(face_image, emotion_model)
 
     # debug only
@@ -90,24 +90,24 @@ def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
 
         # Show final annotated images
         cv2.imshow('camera_image', camera_image)
-        cv2.imshow('face_image', face_image)
+        cv2.waitKey(1)
 
     return (emotions, rect)
 
 
-### MAIN ###
-video_capture = cv2.VideoCapture(0)
-face_detector = load_face_detector()
-emotion_model = load_emotion_model()
+if __name__ == '__main__':
+    video_capture = cv2.VideoCapture(0)
+    face_detector = load_face_detector()
+    emotion_model = load_emotion_model()
 
-while True:
-    # Capture frame-by-frame
-    ret, frame = video_capture.read()
-    recognize_emotions(frame, face_detector, emotion_model, debug=True)
+    while True:
+        # Capture frame-by-frame
+        ret, frame = video_capture.read()
+        recognize_emotions(frame, face_detector, emotion_model, debug=True)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# When everything is done, release the capture
-video_capture.release()
-cv2.destroyAllWindows()
+    # When everything is done, release the capture
+    video_capture.release()
+    cv2.destroyAllWindows()

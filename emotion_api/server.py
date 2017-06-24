@@ -6,48 +6,55 @@ import sys
 import time
 import tornado.ioloop
 import tornado.web
+import json
+import cv2
+import traceback
+import numpy as np
+import time
+import emotion_recognizer
 
-class SerializedWorker():
-  '''holds a forked process worker and an in memory queue for passing messages'''
-  def __init__(self):
-    self.q = Queue()
-    # for a process with the forked_process function
-    self.p = Process(target=self.forked_process, args=(self.q,))
-    self.p.start()
-    self.counter = 0
+face_detector = emotion_recognizer.load_face_detector()
+emotion_model = emotion_recognizer.load_emotion_model()
 
-  # this function runs out of process
-  def forked_process(self, q):
-    while True:
-      work = q.get()
-      try:
-        print("Got work: %d in process %d" % (work, os.getpid()))
-        time.sleep(1)
-        print("Done working on: %d" % work)
-      except:
-        # would probably want to retry once or twice on exception
-        print("Got exception " + sys.exc_info())
-
-  def queue_work(self):
-    '''queue some work for the process to handle'''
-    self.counter += 1
-    # a hash could be pass through for more complex values
-    self.q.put(self.counter)
-
-
-class MainHandler(tornado.web.RequestHandler):
-  def initialize(self, worker):
-    self.worker = worker
-
+class EmotionHandler(tornado.web.RequestHandler):
   def get(self):
-    self.worker.queue_work()
-    self.write("Queued processing of %d\n" % worker.counter)
+    print('get')
+    self.write("oh hai! you need to make a post request")
 
+  def post(self):
+    print("POST %s from %s" % (self.request.path, self.request.remote_ip))
+    self.set_header('Content-Type', 'application/json')
 
-if __name__ == "__main__":
-  worker = SerializedWorker()
+    # Error check the image
+    jpg_image = None
+    try:
+      post_files = self.request.files
+      jpg_image = post_files['file'][0]['body']
+    except Exception:
+      traceback.print_exc()
+
+    if jpg_image is None:
+      result = {'status': 'error', 'error_message': 'No image found'}
+      self.write(json.dumps(result))
+      return
+
+    # Recognize the emotions
+    np_arr = np.fromstring(jpg_image, np.uint8)
+    camera_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    recognize = emotion_recognizer.recognize_emotions
+    emotion_scores, face_rect = recognize(camera_image, face_detector, emotion_model, debug=True)
+    emotion = None if emotion_scores is None else emotion_scores[0][0]
+    result = dict(emotion=emotion, face_rect=face_rect, emotion_scores=emotion_scores)
+    self.write(json.dumps(result))
+    if emotion: print(result)
+
+if __name__ == '__main__':
   application = tornado.web.Application([
-    (r"/", MainHandler, dict(worker=worker)),
+    (r'/emotion', EmotionHandler),
   ])
-  application.listen(8888)
+  port = 8080
+  address = '0.0.0.0'
+  application.listen(port=port)
+  print('Serving emotion_api on %s:%s' % (address, port))
+
   tornado.ioloop.IOLoop.instance().start()
