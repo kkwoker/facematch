@@ -1,9 +1,11 @@
 var server = require('http').createServer();
 var io = require('socket.io')(server);
 
-io.on('connection', function(client){
-  client.on('event', function(data){});
-  client.on('disconnect', function(){});
+io.on('connection', (client) => {
+  client.on('event', (data) => {
+    console.log('data:', data);
+  });
+  client.on('disconnect', () => {});
 });
 
 server.listen(3000);
