@@ -1,11 +1,11 @@
-const WebSocket = require('ws');
+var server = require('http').createServer();
+var io = require('socket.io')(server);
 
-const ws = new WebSocket('ws://www.host.com/path');
-
-ws.on('open', function open() {
-  ws.send('something');
+io.on('connection', function(client){
+  client.on('event', function(data){});
+  client.on('disconnect', function(){});
 });
 
-ws.on('message', function incoming(data) {
-  console.log(data);
-});
+server.listen(3000);
+
+
