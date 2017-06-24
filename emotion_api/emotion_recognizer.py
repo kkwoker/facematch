@@ -67,7 +67,6 @@ def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
 
     # debug only
     if debug:
-        cv2.imshow('Face', face_image)
         green_color = (0, 255, 0)
         top_left = rect[0:2]
         bottom_right = (rect[0] + rect[2], rect[1] + rect[3])

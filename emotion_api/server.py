@@ -49,12 +49,10 @@ class EmotionHandler(tornado.web.RequestHandler):
     if emotion: print(result)
 
 if __name__ == '__main__':
+  port = 8080
   application = tornado.web.Application([
     (r'/emotion', EmotionHandler),
   ])
-  port = 8080
-  address = '0.0.0.0'
   application.listen(port=port)
-  print('Serving emotion_api on %s:%s' % (address, port))
-
+  print('Serving emotion_api on %s' % port)
   tornado.ioloop.IOLoop.instance().start()
