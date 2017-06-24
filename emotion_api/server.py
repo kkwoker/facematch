@@ -7,7 +7,6 @@ import time
 import tornado.ioloop
 import tornado.web
 
-
 class SerializedWorker():
   '''holds a forked process worker and an in memory queue for passing messages'''
   def __init__(self):
@@ -52,4 +51,3 @@ if __name__ == "__main__":
   ])
   application.listen(8888)
   tornado.ioloop.IOLoop.instance().start()
-  
