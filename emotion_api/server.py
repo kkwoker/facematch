@@ -57,9 +57,11 @@ class EmotionHandler(tornado.web.RequestHandler):
         emotion = emotion_scores[0][0]
       emotion_score = emotion_score_map[emotion]
 
-    result = dict(emotion=emotion, score=emotion_score, face_rect=face_rect, emotion_scores=emotion_score_map)
+    result = dict(emotion=emotion, score=emotion_score)
     self.write(json.dumps(result))
-    if face_rect: print(result)
+    if face_rect:
+      print(result)
+      print(emotion_score_map)
 
 if __name__ == '__main__':
   port = 8080

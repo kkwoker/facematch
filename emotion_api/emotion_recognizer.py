@@ -68,6 +68,7 @@ def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
     # debug only
     if debug:
         green_color = (0, 255, 0)
+        blue_color = (255, 0, 0)
         top_left = rect[0:2]
         bottom_right = (rect[0] + rect[2], rect[1] + rect[3])
 
@@ -76,16 +77,16 @@ def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
 
         # draw emotion values
         text_top_left = (top_left[0] + 10, top_left[1] + 20)
-        text_height = 15
-        max_line_width = rect[2] * 2
+        text_height = 20
+        max_line_width = rect[2] * 1.5
 
         for i in range(len(emotions)):
             emotion_name, emotion_score = emotions[i]
             emotion_xy = (text_top_left[0], text_top_left[1] + (i * text_height))
             cv2.putText(camera_image, emotion_name, emotion_xy, cv2.FONT_HERSHEY_SIMPLEX, 0.5, green_color)
-            line_xy = (emotion_xy[0], emotion_xy[1] + 2)
+            line_xy = (emotion_xy[0], emotion_xy[1] + 5)
             line_width = int(max_line_width * emotion_score)
-            cv2.line(camera_image, line_xy, (line_xy[0] + line_width, line_xy[1]), green_color)
+            cv2.line(camera_image, line_xy, (line_xy[0] + line_width, line_xy[1]),  blue_color, 2)
 
         # Show final annotated images
         cv2.imshow('camera_image', camera_image)
