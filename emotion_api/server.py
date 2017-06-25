@@ -11,7 +11,7 @@ import cv2
 import traceback
 import numpy as np
 import time
-import emotion_recognizer
+# import emotion_recognizer
 
 class EmotionHandler(tornado.web.RequestHandler):
   def get(self):
@@ -59,10 +59,43 @@ class EmotionHandler(tornado.web.RequestHandler):
       print(result)
       print(emotion_score_map)
 
+
+class LeaderboardHandler(tornado.web.RequestHandler):
+  def initialize(self):
+    self.leaderboard_file = 'leaderboard.json'
+
+  def load_leaderboard(self):
+    with open(self.leaderboard_file, 'r') as f:
+      return json.loads(f.read())
+
+  def save_leaderboard(self, leaderboard):
+    with open(self.leaderboard_file, 'w') as f:
+      f.write(json.dumps(leaderboard, indent=2))
+
+  def get(self):
+    self.set_header('Content-Type', 'application/json')
+    leaderboard = self.load_leaderboard()
+    scores = []
+    for name, score in leaderboard.items():
+      scores.append({'name': name, 'score': score})
+
+    # Sort by score
+    scores.sort(key=lambda s:s['score'], reverse=True)
+    self.write(json.dumps(scores))
+
+  def post(self):
+    leaderboard = self.load_leaderboard()
+    player = json.loads(self.request.body)
+    leaderboard[player['name']] = player['score']
+    self.save_leaderboard(leaderboard)
+    print("POST %s from %s" % (self.request.path, self.request.remote_ip), leaderboard)
+    self.get() # Return new leaderboard
+
 if __name__ == '__main__':
   port = 8080
   application = tornado.web.Application([
     (r'/emotion', EmotionHandler),
+    (r'/leaderboard', LeaderboardHandler),
   ])
   application.listen(port=port)
   print('Serving emotion_api on %s' % port)
