@@ -28,6 +28,7 @@ class EmotionHandler(tornado.web.RequestHandler):
     # Error check the image
     jpg_image = None
     emotion = None
+    emotion_score = 0
     emotion_score_map = {}
 
     try:
@@ -58,7 +59,7 @@ class EmotionHandler(tornado.web.RequestHandler):
 
     result = dict(emotion=emotion, score=emotion_score, face_rect=face_rect, emotion_scores=emotion_score_map)
     self.write(json.dumps(result))
-    if emotion: print(result)
+    if face_rect: print(result)
 
 if __name__ == '__main__':
   port = 8080
