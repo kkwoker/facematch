@@ -27,8 +27,12 @@ class EmotionHandler(tornado.web.RequestHandler):
 
     # Error check the image
     jpg_image = None
+    emotion = None
+    emotion_score_map = {}
+
     try:
       post_files = self.request.files
+      emotion = self.get_argument('emotion', default=None)
       jpg_image = post_files['file'][0]['body']
     except Exception:
       traceback.print_exc()
@@ -43,8 +47,16 @@ class EmotionHandler(tornado.web.RequestHandler):
     camera_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
     recognize = emotion_recognizer.recognize_emotions
     emotion_scores, face_rect = recognize(camera_image, face_detector, emotion_model, debug=True)
-    emotion = None if emotion_scores is None else emotion_scores[0][0]
-    result = dict(emotion=emotion, face_rect=face_rect, emotion_scores=emotion_scores)
+
+    # Build emotion score map
+    if emotion_scores:
+      for emotion_name, emotion_score in emotion_scores:
+        emotion_score_map[emotion_name] = int(emotion_score * 10)
+      if not emotion: # get the top emotion
+        emotion = emotion_scores[0][0]
+      emotion_score = emotion_score_map[emotion]
+
+    result = dict(emotion=emotion, score=emotion_score, face_rect=face_rect, emotion_scores=emotion_score_map)
     self.write(json.dumps(result))
     if emotion: print(result)
 

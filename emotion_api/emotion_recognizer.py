@@ -77,7 +77,7 @@ def recognize_emotions(camera_image, face_detector, emotion_model, debug=False):
         # draw emotion values
         text_top_left = (top_left[0] + 10, top_left[1] + 20)
         text_height = 15
-        max_line_width = rect[2]
+        max_line_width = rect[2] * 2
 
         for i in range(len(emotions)):
             emotion_name, emotion_score = emotions[i]
