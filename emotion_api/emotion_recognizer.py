@@ -5,6 +5,7 @@ import time
 import dlib
 import numpy as np
 from imutils import face_utils
+from sklearn.externals import joblib
 
 # Make tensorflow silent SSE4.1 SSE4.2 AVX, AVX2, FMA
 import os
@@ -26,6 +27,10 @@ def load_emotion_model():
         print("Model loaded")
 
     return model
+
+
+def load_svc_emotion_model():
+    return joblib.load('svc_trained.pkl')
 
 def load_landmark_detector():
     predictor_path = 'shape_predictor_68_face_landmarks.dat'
@@ -136,15 +141,17 @@ def draw_emotion_scores(camera_image, emotions, top_left, width, color):
         line_width = int(max_line_width * emotion_score)
         cv2.line(camera_image, line_xy, (line_xy[0] + line_width, line_xy[1]),  color, 2)
 
+
 def recognize_emotions(camera_image, debug=False):
     face_image, rect = get_face_image_dlib(camera_image, face_detector_dlib)
-    face_image, rect = get_face_image_cv(camera_image, face_detector_cv)
-    if face_image is None: return (None, None)# No face detected
+    # face_image, rect = get_face_image_cv(camera_image, face_detector_cv)
+    if face_image is None: return (None, None) # No face detected
     emotions = predict_emotion(face_image, emotion_model)
     emotions.sort(key=lambda i: i[1], reverse=True)  # sort by score
 
     top_left = rect[0:2]
     bottom_right = (rect[0] + rect[2], rect[1] + rect[3])
+    print("rect", rect)
 
     # Facial landmark shapes
     face_landmarks = landmark_detector(face_image, dlib.rectangle(0, 0, rect[2], rect[3]))

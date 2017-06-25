@@ -11,7 +11,7 @@ import cv2
 import traceback
 import numpy as np
 import time
-# import emotion_recognizer
+import emotion_recognizer
 
 class EmotionHandler(tornado.web.RequestHandler):
   def get(self):
