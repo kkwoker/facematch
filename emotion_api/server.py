@@ -13,9 +13,6 @@ import numpy as np
 import time
 import emotion_recognizer
 
-face_detector = emotion_recognizer.load_face_detector()
-emotion_model = emotion_recognizer.load_emotion_model()
-
 class EmotionHandler(tornado.web.RequestHandler):
   def get(self):
     print('get')
@@ -46,8 +43,7 @@ class EmotionHandler(tornado.web.RequestHandler):
     # Recognize the emotions
     np_arr = np.fromstring(jpg_image, np.uint8)
     camera_image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-    recognize = emotion_recognizer.recognize_emotions
-    emotion_scores, face_rect = recognize(camera_image, face_detector, emotion_model, debug=True)
+    emotion_scores, face_rect = emotion_recognizer.recognize_emotions(camera_image, debug=True)
 
     # Build emotion score map
     if emotion_scores:
