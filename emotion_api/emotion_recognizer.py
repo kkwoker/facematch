@@ -11,14 +11,15 @@ from sklearn.externals import joblib
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-from keras.models import model_from_json
+# from keras.models import model_from_json
 
 def load_face_detector_cv():
     haarcascade_path = 'haarcascade_frontalface_default.xml'
     face_detector = cv2.CascadeClassifier(haarcascade_path)
     return face_detector
 
-def load_emotion_model():
+def load_emotion_model_cnn():
+    return None
     # load json and create model from .json and load the h5 weights
     with open('model.json', 'r') as f:
         print("Loading model")
@@ -28,9 +29,8 @@ def load_emotion_model():
 
     return model
 
-
-def load_svc_emotion_model():
-    return joblib.load('svc_trained.pkl')
+def load_emotion_model_svm():
+    return joblib.load('svm_trained.pkl')
 
 def load_landmark_detector():
     predictor_path = 'shape_predictor_68_face_landmarks.dat'
@@ -38,7 +38,7 @@ def load_landmark_detector():
     return predictor
 
 # returns [(emotion, score), (emotion, score), ...]
-def predict_emotion(face_image_gray, emotion_model):
+def predict_emotion_cnn(face_image_gray, emotion_model):
     # Resize image to 48x48 in a single channel
     img_width = 48
     resized_img = cv2.resize(face_image_gray, (img_width, img_width), interpolation=cv2.INTER_AREA)
@@ -47,6 +47,19 @@ def predict_emotion(face_image_gray, emotion_model):
     # Predict scores and return sorted (score, name) tuples
     emotion_names = ['angry', 'fear', 'happy', 'sad', 'surprise', 'neutral']
     emotion_scores = emotion_model.predict(image, batch_size=1, verbose=False)
+    emotion_scores = emotion_scores.reshape(emotion_scores.shape[1]).tolist()
+    emotion_predictions = list(zip(emotion_names, emotion_scores))
+    return emotion_predictions
+
+# returns [(emotion, score), (emotion, score), ...]
+
+def predict_emotion_svm(face_landmarks, emotion_model):
+    # Resize image to 48x48 in a single channel
+
+    # Predict scores and return sorted (score, name) tuples
+    emotion_names = ["angry", "neutral", "sad", "fear", "happy", "sad", "surprise"]
+    np_landmarks = face_landmarks.reshape(1, 68*2)
+    emotion_scores = emotion_model.predict_proba(np_landmarks)
     emotion_scores = emotion_scores.reshape(emotion_scores.shape[1]).tolist()
     emotion_predictions = list(zip(emotion_names, emotion_scores))
     return emotion_predictions
@@ -145,17 +158,27 @@ def draw_emotion_scores(camera_image, emotions, top_left, width, color):
 def recognize_emotions(camera_image, debug=False):
     face_image, rect = get_face_image_dlib(camera_image, face_detector_dlib)
     # face_image, rect = get_face_image_cv(camera_image, face_detector_cv)
-    if face_image is None: return (None, None) # No face detected
-    emotions = predict_emotion(face_image, emotion_model)
-    emotions.sort(key=lambda i: i[1], reverse=True)  # sort by score
+    if face_image is None:
+        if debug:
+            cv2.imshow('camera_image', camera_image)
+            cv2.waitKey(1)
+        return (None, None) # No face detected
 
+    # Compute face rect coords
     top_left = rect[0:2]
     bottom_right = (rect[0] + rect[2], rect[1] + rect[3])
-    print("rect", rect)
+    # print("rect", rect)
 
-    # Facial landmark shapes
+    # Prediction via cnn model
+    # emotions = predict_emotion_cnn(face_image, emotion_model_cnn)
+
+    # Prediction via facial landmarks
     face_landmarks = landmark_detector(face_image, dlib.rectangle(0, 0, rect[2], rect[3]))
     face_landmarks = face_utils.shape_to_np(face_landmarks)
+    emotions = predict_emotion_svm(face_landmarks, emotion_model_svm)
+
+    # Sort by emotion score
+    emotions.sort(key=lambda i: i[1], reverse=True)  # sort by score
 
     # debug only
     if debug:
@@ -178,11 +201,11 @@ def recognize_emotions(camera_image, debug=False):
 face_detector_dlib = dlib.get_frontal_face_detector()
 face_detector_cv = load_face_detector_cv()
 landmark_detector = load_landmark_detector()
-emotion_model = load_emotion_model()
+emotion_model_cnn = load_emotion_model_cnn()
+emotion_model_svm = load_emotion_model_svm()
 
 if __name__ == '__main__':
     video_capture = cv2.VideoCapture(0)
-
 
     while True:
         # Capture frame-by-frame
